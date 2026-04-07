@@ -1,0 +1,163 @@
+`timescale 1ns / 1ps
+
+module Booth_Multiplier_Testbench;
+    reg clk, rst;
+    reg [15:0] M, Q;
+    wire [31:0] product;
+    
+    Booth_Multiplier my_Booth_Multiplier(
+        .clk(clk), 
+        .rst(rst), 
+        .M(M), 
+        .Q(Q), 
+        .product(product)
+    );
+    
+    reg [31:0] expected;
+    integer num_correct, num_wrong;
+    integer test_id;
+    
+    // Clock generation
+    always begin
+        clk = 0; #5;
+        clk = 1; #5;
+    end
+    
+    initial begin
+        $display("========================================");
+        $display("   Booth Multiplier Testbench (16-bit)");
+        $display("========================================\n");
+        
+        // Initialize
+        num_correct = 0;
+        num_wrong = 0;
+        test_id = 0;
+        
+        // Reset
+        rst = 1'b0;
+        M = 0; 
+        Q = 0;
+        #2.5;
+        rst = 1'b1;
+        #20;
+        
+        // Test 1: Normal case
+        test_id = test_id + 1;
+        M = 18; 
+        Q = 999;
+        expected = $signed(M) * $signed(Q);
+       #20;
+        check_result(test_id, M, Q, expected, product);
+        
+        // Test 2: Normal case
+        test_id = test_id + 1;
+        M = 14234; 
+        Q = 14244;
+        expected = $signed(M) * $signed(Q);
+        #20;
+        check_result(test_id, M, Q, expected, product);
+        
+        // Test 3: Normal case
+        test_id = test_id + 1;
+        M = 1; 
+        Q = 11111;
+        expected = $signed(M) * $signed(Q);
+        #20;
+        check_result(test_id, M, Q, expected, product);
+        
+        // Test 4: Negative number
+        test_id = test_id + 1;
+        M = -2311; 
+        Q = 11111;
+        expected = $signed(M) * $signed(Q);
+        #20;
+        check_result(test_id, M, Q, expected, product);
+        
+        // Test 5: Corner case - both max negative? (signed: -1 x -1)
+        test_id = test_id + 1;
+        M = 16'hFFFF;  // -1 in signed
+        Q = 16'hFFFF;  // -1 in signed
+        expected = $signed(M) * $signed(Q);  // = 1
+        #20;
+        check_result(test_id, M, Q, expected, product);
+        
+        // Test 6: Corner case - max positive
+        test_id = test_id + 1;
+        M = 16'h7FFF;  // 32767
+        Q = 16'h7FFF;  // 32767
+   expected = $signed(M) * $signed(Q);  // = 1
+        #20;
+        check_result(test_id, M, Q, expected, product);
+        
+        // Test 7: Corner case - min negative
+        test_id = test_id + 1;
+        M = 16'h8000;  // -32768
+        Q = 16'h8000;  // -32768
+        expected = $signed(M) * $signed(Q);  // = 1073741824
+        #20;
+        check_result(test_id, M, Q, expected, product);
+        
+        // Test 8: Negative x Negative
+        test_id = test_id + 1;
+        M = -5000;
+        Q = -3000;
+        expected = $signed(M) * $signed(Q);
+        #20;
+        check_result(test_id, M, Q, expected, product);
+        
+        // Test 9: Positive x Negative
+        test_id = test_id + 1;
+        M = 11;
+        Q = 9;
+        expected = $signed(M) * $signed(Q);
+        #20;
+        check_result(test_id, M, Q, expected, product);
+        
+        // Test 10: Zero
+        test_id = test_id + 1;
+        M = 0;
+        Q = 12345;
+        expected = $signed(M) * $signed(Q);
+        #20;
+        check_result(test_id, M, Q, expected, product);
+        
+        #50;
+        
+        // Summary
+        $display("\n========================================");
+        $display("           TEST SUMMARY");
+        $display("========================================");
+        $display("Total tests  : %0d", test_id);
+        $display("Passed       : %0d", num_correct);
+        $display("Failed       : %0d", num_wrong);
+        $display("Success rate : %0.2f%%", (num_correct * 100.0) / test_id);
+        $display("========================================");
+        
+        if (num_wrong == 0)
+            $display("ALL TESTS PASSED! ");
+        else
+            $display("  SOME TESTS FAILED! ");
+        
+        $finish;
+    end
+    
+    task check_result;
+        input integer tid;
+        input [15:0] m_val, q_val;
+        input [31:0] exp;
+        input [31:0] prod;
+        begin
+            #2;  // Wait for product to stabilize
+            if (exp == prod) begin
+                num_correct = num_correct + 1;
+                $display("Test %0d: PASSED | %0d x %0d = %0d", 
+                         tid, $signed(m_val), $signed(q_val), $signed(prod));
+            end else begin
+                num_wrong = num_wrong + 1;
+                $display("Test %0d: FAILED | %0d x %0d = %0d (expected %0d)", 
+                         tid, $signed(m_val), $signed(q_val), $signed(prod), $signed(exp));
+            end
+        end
+    endtask
+    
+endmodule
