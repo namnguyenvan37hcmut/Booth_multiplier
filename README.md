@@ -3,6 +3,6 @@ DATAPATH
 RTL of Wallace Tree
 <img width="1024" height="649" alt="image" src="https://github.com/user-attachments/assets/a177b42d-a407-4ea9-8543-95fd8c470374" />
 Booth_encoder RTL
-<img width="4792" height="9392" alt="image" src="https://github.com/user-attachments/assets/463a585c-2150-4865-9af2-198c21b40bff" />
+<img width="4792" height="9392" alt="image" src="https://github.com/user-attachments/assets/f678b880-104d-442d-b26b-4fe0a65484b3" />
 
 
